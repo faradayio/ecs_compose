@@ -11,14 +11,17 @@ module EcsCompose
 
     # Create a new generator, specifying the family name to use, and the
     # raw YAML input.
-    def initialize(family, yaml_text)
+    def initialize(family, yaml_text, services: nil)
       @family = family
       @yaml = Psych.load(yaml_text)
+      @services = services
     end
 
     # Generate an ECS task definition as a raw Ruby hash.
     def generate
       containers = @yaml.map do |name, fields|
+        # Skip this service if we've been given a list to emit, and
+        # this service isn't on the list.
         begin
           json = {
             "name" => name,
@@ -46,6 +49,11 @@ module EcsCompose
           # This makes it a lot easier to localize errors a bit.
           raise ContainerKeyError.new("#{e.message} processing container \"#{name}\"")
         end
+      end
+
+      # Prune our services against a list if requested.
+      if @services
+        containers.select! {|c| @services.include?(c["name"]) }
       end
 
       {
@@ -103,7 +111,8 @@ module EcsCompose
     # Convert a docker-compose environment to ECS format.  There are other
     # possible formats for this that we don't support yet.
     def environment(env)
-      env.map {|k, v| { "name" => k, "value" => v } }
+      # We need to force string values to keep ECS happy.
+      env.map {|k, v| { "name" => k, "value" => v.to_s } }
     end
   end
 end
