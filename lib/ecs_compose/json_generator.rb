@@ -48,6 +48,8 @@ module EcsCompose
 
     # Generate an ECS task definition as serialized JSON.
     def json
+      # We do not want to insert much extra whitespace, because ECS imposes
+      # a maximum file-size limit based on bytes.
       JSON.generate(generate())
     end
 
