@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Eric Kidd"]
   spec.email         = ["git@randomhacks.net"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Deploy docker-compose.yml files to Amazon EC2 Container Service}
+  spec.description   = %q{An interace to the Amazon EC2 Container Service that works vaguely like docker-compose, for people who are familiar with a docker-compose workflow.}
+  spec.homepage      = "https://github.com/faradayio/ecs_compose"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
@@ -26,6 +26,9 @@ Gem::Specification.new do |spec|
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
+
+  spec.add_dependency "thor", "~> 0.19.1"
+  spec.add_dependency "colorize", "~> 0.7.7"
 
   spec.add_development_dependency "bundler", "~> 1.10"
   spec.add_development_dependency "rake", "~> 10.0"
