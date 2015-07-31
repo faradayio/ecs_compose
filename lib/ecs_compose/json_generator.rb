@@ -1,12 +1,19 @@
 require 'psych'
+require 'json'
 
 module EcsCompose
+  # Converts from raw YAML text in docker-compose.yml format to ECS task
+  # definition JSON.
   class JsonGenerator
+
+    # Create a new generator, specifying the family name to use, and the
+    # raw YAML input.
     def initialize(family, yaml_text)
       @family = family
       @yaml = Psych.load(yaml_text)
     end
 
+    # Generate an ECS task definition as a raw Ruby hash.
     def generate
       containers = @yaml.map do |name, fields|
         json = {
@@ -37,6 +44,11 @@ module EcsCompose
         "containerDefinitions" => containers,
         "volumes" => []
       }
+    end
+
+    # Generate an ECS task definition as serialized JSON.
+    def json
+      JSON.generate(generate())
     end
 
     protected

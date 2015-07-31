@@ -1,3 +1,5 @@
 #!/usr/bin/env ruby
 
-require "ecs_compose"
+require "ecs_compose/cli"
+
+EcsCompose::Cli.start(ARGV)
