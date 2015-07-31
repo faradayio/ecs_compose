@@ -2,6 +2,9 @@ require 'psych'
 require 'json'
 
 module EcsCompose
+  class ContainerKeyError < KeyError
+  end
+
   # Converts from raw YAML text in docker-compose.yml format to ECS task
   # definition JSON.
   class JsonGenerator
@@ -16,27 +19,33 @@ module EcsCompose
     # Generate an ECS task definition as a raw Ruby hash.
     def generate
       containers = @yaml.map do |name, fields|
-        json = {
-          "name" => name,
-          "image" => fields.fetch("image"),
-          # Default to a tiny guaranteed CPU share.
-          "cpu" => fields["cpu_shares"] || 2,
-          "memory" => mem_limit_to_mb(fields.fetch("mem_limit")),
-          "links" => fields["links"] || [],
-          "portMappings" =>
-            (fields["ports"] || []).map {|pm| port_mapping(pm) },
-          "essential" => true,
-          "environment" => environment(fields["environment"] || {}),
-          "mountPoints" => [],
-          "volumesFrom" => [],
-        }
-        if fields.has_key?("entrypoint")
-          json["entryPoint"] = command_line(fields.fetch("entrypoint"))
+        begin
+          json = {
+            "name" => name,
+            "image" => fields.fetch("image"),
+            # Default to a tiny guaranteed CPU share.
+            "cpu" => fields["cpu_shares"] || 2,
+            "memory" => mem_limit_to_mb(fields.fetch("mem_limit")),
+            "links" => fields["links"] || [],
+            "portMappings" =>
+              (fields["ports"] || []).map {|pm| port_mapping(pm) },
+            "essential" => true,
+            "environment" => environment(fields["environment"] || {}),
+            "mountPoints" => [],
+            "volumesFrom" => [],
+          }
+          if fields.has_key?("entrypoint")
+            json["entryPoint"] = command_line(fields.fetch("entrypoint"))
+          end
+          if fields.has_key?("command")
+            json["command"] = command_line(fields.fetch("command"))
+          end
+          json
+
+        rescue KeyError => e
+          # This makes it a lot easier to localize errors a bit.
+          raise ContainerKeyError.new("#{e.message} processing container \"#{name}\"")
         end
-        if fields.has_key?("command")
-          json["command"] = command_line(fields.fetch("command"))
-        end
-        json
       end
 
       {
