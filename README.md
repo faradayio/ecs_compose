@@ -1,8 +1,10 @@
 # EcsCompose
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/ecs_compose`. To experiment with that code, run `bin/console` for an interactive prompt.
+**This is a work in progress!**
 
-TODO: Delete this and the text above, and describe your gem
+This gem attempts to provide a `docker-compose`-like interface to Amazon EC2 Container Service (ECS).  It takes a `docker-compose.yml` file, and uses the included container definitions to update an ECS task definition and an ECS service.
+
+This is still somewhat rudimentary, and the command-line interface is subject to change.
 
 ## Installation
 
@@ -14,7 +16,7 @@ gem 'ecs_compose'
 
 And then execute:
 
-    $ bundle
+    $ bundle install
 
 Or install it yourself as:
 
@@ -22,7 +24,13 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Using the Amazon Web Services console, create a new ECS cluster and define a service `my-service`.  Describe your service using a standard `docker-compose.yml` file.  Then run:
+
+```sh
+ecs-compose up my-service docker-compose.yml
+```
+
+This will update the task definition `my-service`, and then update the running copy of `my-service` to the new task definition.
 
 ## Development
 
@@ -33,7 +41,6 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/ecs_compose.
-
 
 ## License
 
