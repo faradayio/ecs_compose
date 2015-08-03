@@ -1,0 +1,4 @@
+/.git
+/Gemfile.lock
+/*.gem
+/deploy
