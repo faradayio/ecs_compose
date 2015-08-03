@@ -15,6 +15,7 @@ set +o xtrace
 curl -u faradayio:"$RUBYGEMS_AUTH" https://rubygems.org/api/v1/api_key.yaml > \
     ~/.gem/credentials
 set -o xtrace
+chmod 0600 ~/.gem/credentials
 
 # Test our gem.
 bundle exec rspec
