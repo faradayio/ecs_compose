@@ -2,7 +2,8 @@ require "ecs_compose"
 require "thor"
 
 module EcsCompose
-  class Cli < Thor
+  # Our basic command-line interface.
+  class CLI < Thor
     class_option(:services, type: :string,
                  desc: "A comma-separated list of containers to include. Defaults to all.")
 

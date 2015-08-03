@@ -2,4 +2,4 @@
 
 require "ecs_compose/cli"
 
-EcsCompose::Cli.start(ARGV)
+EcsCompose::CLI.start(ARGV)
