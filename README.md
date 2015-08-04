@@ -27,10 +27,13 @@ Or install it yourself as:
 Using the Amazon Web Services console, create a new ECS cluster and define a service `my-service`.  Describe your service using a standard `docker-compose.yml` file.  Then run:
 
 ```sh
-ecs-compose up my-service docker-compose.yml
+ecs-compose -i service:my-service up
 ```
 
-This will update the task definition `my-service`, and then update the running copy of `my-service` to the new task definition.
+This will update the task definition `my-service`, and then update the running copy of `my-service` to the new task definition.  The `-i` argument specifies the ECS task type (a one-shot `task`, or a persistent `service`, as well as a value to use as the task definiton name and family name on ECS.
+
+There's also a "manifest" mode that allows you to work with multiple
+`docker-compose.yml` files, each defining a different service or task.
 
 ## Development
 
