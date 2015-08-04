@@ -17,6 +17,28 @@ module EcsCompose
                  aliases: %w(-i),
                  desc: "Type and name for use with --file [ex: 'service:hello' or 'task:migrate']")
 
+    desc("up [SERVICES...]", "Register ECS task definitions and update services")
+    def up(*services)
+      available = manifest.task_definitions.select {|td| td.type == :service }
+      chosen = all_or_specified(available, services)
+
+      chosen.each do |service|
+        json = EcsCompose::JsonGenerator.new(service.name, service.yaml).json
+        EcsCompose::Ecs.update_service_with_json(service.name, json)
+      end
+    end
+
+    desc("register [TASK_DEFINITIONS...]", "Register ECS task definitions")
+    def register(*task_definitions)
+      available = manifest.task_definitions
+      chosen = all_or_specified(available, task_definitions)
+
+      chosen.each do |td|
+        json = EcsCompose::JsonGenerator.new(td.name, td.yaml).json
+        EcsCompose::Ecs.register_task_definition(json)
+      end
+    end
+
     desc("json [TASK_DEFINITION]",
          "Convert a task definition to ECS JSON format")
     def json(task_definition=nil)
@@ -37,23 +59,17 @@ module EcsCompose
       puts EcsCompose::JsonGenerator.new(found.name, found.yaml).json
     end
 
-    desc("up [SERVICES...]", "Update ECS services")
-    def up(*services)
-      available = manifest.task_definitions.select {|td| td.type == :service }
-      chosen =
-        if available.empty?
-          available
-        else
-          available.select {|td| services.include?(td.name) }
-        end
-
-      chosen.each do |service|
-        json = EcsCompose::JsonGenerator.new(service.name, service.yaml).json
-        EcsCompose::Ecs.update_service_with_json(service.name, json)
-      end
-    end
-
     protected
+
+    # Choose either all items in `available`, or just those with the
+    # specified `names`.
+    def all_or_specified(available, names)
+      if names.empty?
+        available
+      else
+        available.select {|td| names.include?(td.name) }
+      end      
+    end
 
     # Figure out whether we have a manifest or a docker-compose.yml.  We
     # check supplied flags first, then defaults, and we prefer manifests
