@@ -11,10 +11,9 @@ module EcsCompose
 
     # Create a new generator, specifying the family name to use, and the
     # raw YAML input.
-    def initialize(family, yaml_text, services: nil)
+    def initialize(family, yaml_text)
       @family = family
       @yaml = Psych.load(yaml_text)
-      @services = services
     end
 
     # Generate an ECS task definition as a raw Ruby hash.
@@ -49,11 +48,6 @@ module EcsCompose
           # This makes it a lot easier to localize errors a bit.
           raise ContainerKeyError.new("#{e.message} processing container \"#{name}\"")
         end
-      end
-
-      # Prune our services against a list if requested.
-      if @services
-        containers.select! {|c| @services.include?(c["name"]) }
       end
 
       {

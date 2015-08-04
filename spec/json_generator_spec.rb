@@ -1,10 +1,8 @@
 require 'spec_helper'
 
 describe EcsCompose::JsonGenerator do
-  let(:services) { nil }
-
   subject do
-    EcsCompose::JsonGenerator.new("my-app", yaml, services: services).generate()
+    EcsCompose::JsonGenerator.new("my-app", yaml).generate()
   end
 
   context "using all supported YAML features" do
@@ -105,15 +103,6 @@ YAML
       expect(service2["image"]).to eq("example/service2")
       expect(service2["memory"]).to eq(1)
       expect(service2["essential"]).to eq(true)
-    end
-
-    context "specifying a list of services to include" do
-      let(:services) { ["service1"] }
-
-      it "includes only the specified services" do
-        containers = subject["containerDefinitions"].sort_by {|c| c["name"] }
-        expect(containers.map {|c| c["name"] }).to eq(["service1"])
-      end
     end
   end
 end
