@@ -13,10 +13,11 @@ module EcsCompose
     # Read in a complete manifest.
     def self.read_from_manifest(path)
       dir = File.dirname(path)
-      defs = Psych.load_file(path)['task_definitions'].map do |name, info|
-        TaskDefinition.new(info['type'].to_sym,
+      yaml = Psych.load_file(path)
+      defs = yaml.fetch('task_definitions').map do |name, info|
+        TaskDefinition.new(info.fetch('type').to_sym,
                            name,
-                           File.read(File.join(dir, info['path'])))
+                           File.read(File.join(dir, info.fetch('path'))))
       end
       new(defs)
     end

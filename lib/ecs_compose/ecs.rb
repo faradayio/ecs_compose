@@ -48,7 +48,7 @@ module EcsCompose
     # JSON format.
     def self.update_service_with_json(service, json)
       reg = register_task_definition(json)["taskDefinition"]
-      task_def = "#{reg['family']}:#{reg['revision']}"
+      task_def = "#{reg.fetch('family')}:#{reg.fetch('revision')}"
       update_service(service, task_def)
     end
   end
