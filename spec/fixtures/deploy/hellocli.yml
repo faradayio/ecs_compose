@@ -1,0 +1,3 @@
+hellocli:
+  image: "ubuntu:14.04"
+  command: "/bin/echo Hello World"

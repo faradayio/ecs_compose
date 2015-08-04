@@ -1,0 +1,8 @@
+---
+task_definitions:
+  hello:
+    type: service
+    path: hello.yml
+  hellocli:
+    type: task
+    path: hellocli.yml

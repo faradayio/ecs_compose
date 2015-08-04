@@ -1,0 +1,8 @@
+hello:
+  image: "tutum/hello-world"
+  links:
+    - "db"
+
+db:
+  image: "postgres"
+
