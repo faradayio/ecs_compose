@@ -7,6 +7,11 @@ module EcsCompose
     DEFAULT_FILE = "docker-compose.yml"
     DEFAULT_MANIFEST = "deploy/DEPLOY-MANIFEST.yml"
 
+    # Force status 1 on exit. See: https://github.com/erikhuda/thor/issues/244
+    def self.exit_on_failure?
+      true
+    end
+
     class_option(:manifest, type: :string,
                  aliases: %w(-m),
                  desc: "Manifest describing a set of tasks and services (takes precedence over --file) [default: #{DEFAULT_MANIFEST}]")
