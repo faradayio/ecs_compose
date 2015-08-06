@@ -106,9 +106,10 @@ module EcsCompose
           if info.nil?
             fatal_err("Must pass -i option when using docker-compose.yml")
           end
-          unless info =~ /\A(service|task):[-_A-Za-z0-9\z]/
+          unless info =~ /\A(service|task):([-_A-Za-z0-9\z]+)/
             fatal_err("Incorrectly formatted -i option")
           end
+          type, name = $1, $2
           Manifest.read_from_file(options.file || DEFAULT_FILE,
                                   type.to_sym, name)
         else raise "Unknown mode: #{mode}"
