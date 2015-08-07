@@ -1,5 +1,6 @@
-require 'psych'
+require 'digest/sha1'
 require 'json'
+require 'psych'
 
 module EcsCompose
   class ContainerKeyError < KeyError
@@ -18,10 +19,20 @@ module EcsCompose
 
     # Generate an ECS task definition as a raw Ruby hash.
     def generate
+      # Generate JSON for our containers.
       containers = @yaml.map do |name, fields|
         # Skip this service if we've been given a list to emit, and
         # this service isn't on the list.
         begin
+          mount_points = (fields["volumes"] || []).map do |v|
+            host, container, ro = v.split(':')
+            {
+              "sourceVolume" => path_to_vol_name(host),
+              "containerPath" => container,
+              "readOnly" => (ro == "ro")
+            }
+          end
+
           json = {
             "name" => name,
             "image" => fields.fetch("image"),
@@ -33,7 +44,7 @@ module EcsCompose
               (fields["ports"] || []).map {|pm| port_mapping(pm) },
             "essential" => true,
             "environment" => environment(fields["environment"] || {}),
-            "mountPoints" => [],
+            "mountPoints" => mount_points,
             "volumesFrom" => [],
           }
           if fields.has_key?("entrypoint")
@@ -50,10 +61,21 @@ module EcsCompose
         end
       end
 
+      # Generate our top-level volume declarations.
+      volumes = @yaml.map do |name, fields|
+        (fields["volumes"] || []).map {|v| v.split(':')[0] }
+      end.flatten.sort.uniq.map do |host_path|
+        {
+          "name" => path_to_vol_name(host_path),
+          "host" => { "sourcePath" => host_path }
+        }
+      end
+
+      # Return our final JSON.
       {
         "family" => @family,
         "containerDefinitions" => containers,
-        "volumes" => []
+        "volumes" => volumes
       }
     end
 
@@ -107,6 +129,15 @@ module EcsCompose
     def environment(env)
       # We need to force string values to keep ECS happy.
       env.map {|k, v| { "name" => k, "value" => v.to_s } }
+    end
+
+    # Convert a Unix path into a valid volume name.
+    def path_to_vol_name(path)
+      # Ensure (extremely high probability of) uniqueness by hashing the
+      # pathname, and then include a simplified version of the path for
+      # readability.  This might fail, but the odds are the same as a
+      # failure of git's content-based addressing.
+      Digest::SHA1.hexdigest(path) + path.gsub(/[\/.]/, '_')
     end
   end
 end

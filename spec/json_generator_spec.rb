@@ -105,5 +105,36 @@ YAML
       expect(service2["essential"]).to eq(true)
     end
   end
+
+  context "using a Docker volume" do
+    VOL_NAME = "ea6c68e6d15cfad87656d889a13b56377d13e174_var_run_docker_sock"
+
+    let(:yaml) do
+      <<EOD
+logspout:
+  type: backend
+  image: gliderlabs/logspout
+  volumes:
+    - /var/run/docker.sock:/tmp/docker.sock
+  command: "syslog://logs.papertrailapp.com:123456"
+  mem_limit: 16m # staging: 6m production: 9m
+EOD
+    end
+
+    it "lists the volume at the top level" do
+      vols = subject["volumes"]
+      expect(vols.length).to eq(1)
+      expect(vols[0]["name"]).to eq(VOL_NAME)
+      expect(vols[0]["host"]["sourcePath"]).to eq("/var/run/docker.sock")
+    end
+
+    it "mounts the volume in the appropriate container" do
+      mounts = subject["containerDefinitions"][0]["mountPoints"]
+      expect(mounts.length).to eq(1)
+      expect(mounts[0]["sourceVolume"]).to eq(VOL_NAME)
+      expect(mounts[0]["containerPath"]).to eq("/tmp/docker.sock")
+      expect(mounts[0]["readOnly"]).to eq(false)
+    end
+  end
 end
 
