@@ -1,5 +1,185 @@
 #!/usr/bin/env ruby
 
-require "ecs_compose/cli"
+require "docopt"
+require "ecs_compose"
 
-EcsCompose::CLI.start(ARGV)
+USAGE = <<DOCOPT
+ecs-compose - Like docker-compose, but for AWS EC2 Container Service
+
+Usage:
+  ecs-compose --help
+  ecs-compose --version
+  ecs-compose [options] register [<task_def>...]
+  ecs-compose [options] up [<service>...]
+  ecs-compose [options] run [-e <name>=<value>]... [--entrypoint <entrypoint>] <task> [--] [<arg>...]
+  ecs-compose [options] json [<task_def>]
+
+Options:
+  -h, --help          Show this help message
+  --version           Print the version of this program
+  -m, --manifest <manifest>
+                      Path to an ecs-compose manifest (defaults to
+                      deploy/DEPLOY-MANIFEST.yml, takes precedence over --file)
+  -f, --file <file>   Path to docker-compose.yml file (defaults to
+                      docker-compose.yml)
+  -i, --file-info (task:<name> | service:<name>)
+                      Specify the task type and task name for a
+                      docker-compose.yml file
+  -e <name>=<value>   Set an environment variable
+  --entrypoint <entrypoint>
+                      Override the container's regular entrypoint
+
+Commands:
+  register  Registers the specified ECS task definitions (defaults to all)
+  up        Updates the specified ECS services (defaults to all)
+  run       Runs the specified task
+  json      Generate JSON for a specific task definition
+DOCOPT
+
+# Our command-line application.  Parses our rather complicated arguments,
+# then delegates all the real work to our usual internal classes.
+class App
+  include EcsCompose
+
+  DEFAULT_FILE = "docker-compose.yml"
+  DEFAULT_MANIFEST = "deploy/DEPLOY-MANIFEST.yml"
+
+  attr_reader :options, :manifest
+
+  def initialize
+    @options = Docopt::docopt(USAGE, version: EcsCompose::VERSION)
+    @manifest = load_manifest()
+
+    # Uncomment to dump the docopt parser output, which can be non-obvious.
+    #require "pp"
+    #pp(options)
+  end
+
+  # Figure out which subcommand was chosen, and run it.
+  def run
+    for command in %w{register up run json}
+      if options.fetch(command)
+        send("command_#{command}")
+        return
+      end
+    end
+    # We shouldn't ever get here.
+    raise "Unknown command: #{command}"
+  end
+
+  protected
+
+  def command_register
+    available = manifest.task_definitions
+    chosen = all_or_specified(available, options.fetch('<task_def>'))
+    chosen.each {|td| td.register }
+  end
+
+  def command_up
+    available = manifest.task_definitions.select {|td| td.type == :service }
+    chosen = all_or_specified(available, options.fetch('<service>'))
+    chosen.each {|td| td.up }
+  end
+
+  def command_run
+    available = manifest.task_definitions.select {|td| td.type == :task }
+    task_name = options.fetch('<task>')
+    task = available.find {|td| td.name == task_name } or
+      fatal_err("Cannot find task '#{task_name}'")
+
+    env = options.fetch('-e').flatten.inject({}) do |hsh, e_opt|
+      e_opt =~ /\A([^=]+)=(.*)/ or 
+        fatal_err "Can't parse '-e #{e_opt}'"
+      hsh[$1] = $2
+      hsh
+    end
+
+    command = options.fetch('<arg>')
+    command = nil if command.empty?
+
+    task.run(environment: env,
+             entrypoint: options.fetch('--entrypoint').flatten[0],
+             command: command)
+  end
+
+  def command_json
+    task_definition = options.fetch('<task_def>')[0]
+    if task_definition.nil?
+      choices = manifest.task_definitions.map {|td| td.name }
+      case choices.length
+      when 0
+        fatal_err("Please supply a manifest with at least one task definition")
+      when 1
+        task_definition = choices.first
+      else
+        fatal_err("Please choose one of: #{choices.join(', ')}")
+      end
+    end
+
+    found = manifest.task_definitions.find {|td| td.name } or
+      fatal_err("Can't find task definition: #{task_definition}")
+    puts found.to_json
+  end
+
+  # Choose either all items in `available`, or just those with the
+  # specified `names`.
+  def all_or_specified(available, names)
+    if names.empty?
+      available
+    else
+      available.select {|td| names.include?(td.name) }
+    end      
+  end
+
+  # Figure out whether we have a manifest or a docker-compose.yml.  We
+  # check supplied flags first, then defaults, and we prefer manifests
+  # when there's a tie.
+  def mode
+    if options.fetch('--manifest')
+      :manifest
+    elsif options.fetch('--file')
+      :file
+    elsif File.exist?(DEFAULT_MANIFEST)
+      :manifest
+    elsif File.exist?(DEFAULT_FILE)
+      :file
+    else
+      fatal_err("Unable to find either #{DEFAULT_FILE} or #{DEFAULT_MANIFEST}")
+    end
+  end
+
+  # Create a manifest, either by reading it in, or synthesizing it from a
+  # `docker-compose.yml` file and some extra arguments.
+  def load_manifest
+    case mode
+    when :manifest
+      Manifest.read_from_manifest(options.fetch('--manifest') || DEFAULT_MANIFEST)
+    when :file
+      info = options.fetch('--file-info')
+      if info.nil?
+        fatal_err("Must pass -i option when using docker-compose.yml")
+      end
+      unless info =~ /\A(service|task):([-_A-Za-z0-9\z]+)/
+        fatal_err("Incorrectly formatted -i option")
+      end
+      type, name = $1, $2
+      Manifest.read_from_file(options.fetch('--file') || DEFAULT_FILE,
+                              type.to_sym, name)
+    else raise "Unknown mode: #{mode}"
+    end
+  end
+
+  # Print an error and quit.
+  def fatal_err(msg)
+    STDERR.puts(msg.red)
+    exit(1)
+  end
+end
+
+# Run our application.
+begin
+  App.new.run
+rescue Docopt::Exit => e
+  puts e.message
+  exit(1)
+end
