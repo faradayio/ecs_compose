@@ -37,7 +37,11 @@ describe EcsCompose::TaskDefinition do
         expect(EcsCompose::Ecs).to receive(:run)
           .with("update-service", "--service", "hello",
                 "--task-definition", "hello:2") { {} }
-        subject.update
+        expect(EcsCompose::Ecs).to receive(:run)
+          .with("wait", "services-stable", "--services", "hello")
+        service = subject.update
+        expect(service).to eq("hello")
+        EcsCompose::TaskDefinition.wait_for_services([service])
       end
     end
   end
@@ -66,7 +70,9 @@ describe EcsCompose::TaskDefinition do
           { "failures" => [], "tasks" => [] }
         end
 
-        subject.run(command: ["/bin/bash"])
+        arn = subject.run(command: ["/bin/bash"])
+        expect(arn).to eq("arn:123")
+        EcsCompose::TaskDefinition.wait_for_tasks([arn])
       end
     end
   end

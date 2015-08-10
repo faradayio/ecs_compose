@@ -3,6 +3,7 @@
 require 'colorize'
 require 'json'
 require 'open3'
+require 'shellwords'
 require 'tempfile'
 
 module EcsCompose
@@ -18,7 +19,7 @@ module EcsCompose
     # Run `aws ecs` with the specified arguments.
     def self.run(*args)
       command = ["aws", "ecs"] + args + ["--output", "json"]
-      STDERR.puts "→ #{command.join(' ').blue}"
+      STDERR.puts "→ #{Shellwords.join(command).blue}"
       stdout, status = Open3.capture2(*command)
       if status != 0
         raise "Error running: #{command.inspect}"
@@ -62,14 +63,23 @@ module EcsCompose
           *extra_args)
     end
 
-    def self.wait_tasks_stopped(*arns)
-      run("wait", "tasks-stopped",
-          "--tasks", arns.join(" "))
+    # Wait until all of the specified services have reached a stable state.
+    # Returns nil.
+    def self.wait_services_stable(services)
+      run("wait", "services-stable",
+          "--services", *services)
     end
 
-    def self.describe_tasks(*arns)
+    # Wait until all of the specified tasks have stopped.  Returns nil.
+    def self.wait_tasks_stopped(arns)
+      run("wait", "tasks-stopped",
+          "--tasks", *arns)
+    end
+
+    # Describe a set of tasks as JSON.
+    def self.describe_tasks(arns)
       run("describe-tasks",
-          "--tasks", arns.join(" "))
+          "--tasks", *arns)
     end
   end
 end

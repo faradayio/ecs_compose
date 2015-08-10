@@ -30,6 +30,13 @@ module EcsCompose
     # service.
     def update
       Ecs.update_service(name, register)
+      name
+    end
+
+    # Wait for a set of services to reach a steady state.
+    def self.wait_for_services(service_names)
+      Ecs.wait_services_stable(service_names)
+      # TODO: Check for errors during stabilization.
     end
 
     # Run this task definition as a one-shot ECS task, with the specified
@@ -37,12 +44,13 @@ module EcsCompose
     def run(**args)
       overrides_json = json_generator.generate_override_json(**args)
       info = Ecs.run_task(register, overrides_json: overrides_json)
-      arn = info.fetch("tasks")[0].fetch("taskArn")
-      #STDERR.puts("Running as: #{arn}")
+      info.fetch("tasks")[0].fetch("taskArn")
+    end
 
-      # Wait until the task has finished running and check for errors.
-      Ecs.wait_tasks_stopped(arn)
-      TaskError.fail_on_errors(Ecs.describe_tasks(arn))
+    # Wait for a set of tasks to finish, and raise an error if they fail.
+    def self.wait_for_tasks(task_arns)
+      Ecs.wait_tasks_stopped(task_arns)
+      TaskError.fail_on_errors(Ecs.describe_tasks(task_arns))
     end
 
     # Generate ECS task definition JSON for this instance.

@@ -79,7 +79,8 @@ class App
   def command_up
     available = manifest.task_definitions.select {|td| td.type == :service }
     chosen = all_or_specified(available, options.fetch('<service>'))
-    chosen.each {|td| td.update }
+    services = chosen.map {|td| td.update }
+    EcsCompose::TaskDefinition.wait_for_services(services)
   end
 
   def command_run
@@ -104,9 +105,10 @@ class App
     command = options.fetch('<arg>')
     command = nil if command.empty?
 
-    task.run(environment: env,
-             entrypoint: options.fetch('--entrypoint').flatten[0],
-             command: command)
+    arn = task.run(environment: env,
+                   entrypoint: options.fetch('--entrypoint').flatten[0],
+                   command: command)
+    EcsCompose::TaskDefinition.wait_for_tasks([arn])
   end
 
   def command_json
