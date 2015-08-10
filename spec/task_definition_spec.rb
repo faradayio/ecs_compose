@@ -55,7 +55,17 @@ describe EcsCompose::TaskDefinition do
         end
         expect(EcsCompose::Ecs).to receive(:run)
           .with("run-task", "--task-definition", "hellocli:1",
-                "--overrides", anything)
+                "--overrides", anything) do
+          { "tasks" => [{ "taskArn" => "arn:123" }] }
+        end
+        expect(EcsCompose::Ecs).to receive(:run)
+          .with("wait", "tasks-stopped", "--tasks", "arn:123")
+        expect(EcsCompose::Ecs).to receive(:run)
+          .with("describe-tasks", "--tasks", "arn:123") do
+          # We may need to fill in more of these fields later.
+          { "failures" => [], "tasks" => [] }
+        end
+
         subject.run(command: ["/bin/bash"])
       end
     end

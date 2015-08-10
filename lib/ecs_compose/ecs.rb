@@ -18,12 +18,16 @@ module EcsCompose
     # Run `aws ecs` with the specified arguments.
     def self.run(*args)
       command = ["aws", "ecs"] + args + ["--output", "json"]
-      puts "→ #{command.join(' ').blue}"
+      STDERR.puts "→ #{command.join(' ').blue}"
       stdout, status = Open3.capture2(*command)
       if status != 0
         raise "Error running: #{command.inspect}"
       end
-      JSON.parse(stdout)
+      if stdout.empty?
+        nil
+      else
+        JSON.parse(stdout)
+      end
     end
 
     # Register the specified task definition (passed as JSON data).
@@ -56,6 +60,16 @@ module EcsCompose
       run("run-task",
           "--task-definition", task_definition,
           *extra_args)
+    end
+
+    def self.wait_tasks_stopped(*arns)
+      run("wait", "tasks-stopped",
+          "--tasks", arns.join(" "))
+    end
+
+    def self.describe_tasks(*arns)
+      run("describe-tasks",
+          "--tasks", arns.join(" "))
     end
   end
 end

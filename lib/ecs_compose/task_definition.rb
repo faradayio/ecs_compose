@@ -21,7 +21,7 @@ module EcsCompose
     # Returns a string of the form `"name:revision"` identifying the task
     # we registered.
     def register
-      reg = EcsCompose::Ecs.register_task_definition(to_json)
+      reg = Ecs.register_task_definition(to_json)
         .fetch("taskDefinition")
       "#{reg.fetch('family')}:#{reg.fetch('revision')}"
     end
@@ -29,14 +29,20 @@ module EcsCompose
     # Register this task definition with ECS, and update the corresponding
     # service.
     def update
-      EcsCompose::Ecs.update_service(name, register)
+      Ecs.update_service(name, register)
     end
 
     # Run this task definition as a one-shot ECS task, with the specified
     # overrides.
     def run(**args)
       overrides_json = json_generator.generate_override_json(**args)
-      EcsCompose::Ecs.run_task(register, overrides_json: overrides_json)
+      info = Ecs.run_task(register, overrides_json: overrides_json)
+      arn = info.fetch("tasks")[0].fetch("taskArn")
+      #STDERR.puts("Running as: #{arn}")
+
+      # Wait until the task has finished running and check for errors.
+      Ecs.wait_tasks_stopped(arn)
+      TaskError.fail_on_errors(Ecs.describe_tasks(arn))
     end
 
     # Generate ECS task definition JSON for this instance.
@@ -48,7 +54,7 @@ module EcsCompose
 
     # Return a JSON generator for this task.
     def json_generator
-      @json_generator ||= EcsCompose::JsonGenerator.new(name, yaml)
+      @json_generator ||= JsonGenerator.new(name, yaml)
     end
   end
 end

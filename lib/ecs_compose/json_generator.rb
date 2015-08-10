@@ -36,7 +36,9 @@ module EcsCompose
           json = {
             "name" => name,
             "image" => fields.fetch("image"),
-            # Default to a tiny guaranteed CPU share.
+            # Default to a tiny guaranteed CPU share.  Currently, 2 is the
+            # smallest meaningful value, and various ECS tools will round
+            # smaller numbers up.
             "cpu" => fields["cpu_shares"] || 2,
             "memory" => mem_limit_to_mb(fields.fetch("mem_limit")),
             "links" => fields["links"] || [],
