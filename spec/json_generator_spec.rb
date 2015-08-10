@@ -136,5 +136,38 @@ EOD
       expect(mounts[0]["readOnly"]).to eq(false)
     end
   end
+
+  describe "#generate_override" do
+    let(:yaml) { File.read(fixture_path("deploy/hellocli.yml")) }
+    subject { EcsCompose::JsonGenerator.new('hellocli', yaml) }
+
+    it "returns nil if no overrides are applied" do
+      expect(subject.generate_override()).to eq(nil)
+    end
+
+    it "allows overriding environment variables" do
+      override = subject.generate_override(environment: { "FOO" => "BAR" })
+      containerOverrides = override.fetch('containerOverrides')
+      expect(containerOverrides.length).to eq(1)
+      expect(containerOverrides[0].fetch("environment"))
+        .to eq({ "FOO" => "BAR" })
+    end
+
+    it "allows overriding the container's command" do
+      override = subject.generate_override(command: ["sudo", "shutdown"])
+      containerOverrides = override.fetch('containerOverrides')
+      expect(containerOverrides.length).to eq(1)
+      expect(containerOverrides[0].fetch("command"))
+        .to eq(["sudo", "shutdown"])
+    end
+
+    it "allows overriding the container's entrypoint" do
+      override = subject.generate_override(entrypoint: ["/usr/bin/fish"])
+      containerOverrides = override.fetch('containerOverrides')
+      expect(containerOverrides.length).to eq(1)
+      expect(containerOverrides[0].fetch("entryPoint"))
+        .to eq(["/usr/bin/fish"])
+    end
+  end
 end
 

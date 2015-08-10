@@ -86,6 +86,40 @@ module EcsCompose
       JSON.generate(generate())
     end
 
+    # Generate an `--overrides` value for use with with `aws ecs run-task`
+    # as a raw Ruby hash.
+    def generate_override(environment: {}, entrypoint: nil, command: nil)
+      # Right now, we only support overriding for single-container tasks, so
+      # find our single container if we have it.
+      if @yaml.length != 1
+        raise "Can only override task attributes for single-container tasks"
+      end
+      name = @yaml.keys.first
+      container_overrides = { "name" => name }
+
+      # Apply any environment overrides.
+      if environment && !environment.empty?
+        container_overrides["environment"] = environment
+      end
+
+      # Apply any other overrides.
+      container_overrides["command"] = command if command
+      # TODO: This may not actually be supported by AWS yet.
+      container_overrides["entryPoint"] = entrypoint if entrypoint
+
+      # Return nil if we haven't generated any actual overrides.
+      if container_overrides.length > 1
+        { "containerOverrides" => [ container_overrides ] }
+      else
+        nil
+      end
+    end
+
+    # Like generate, but return serialized JSON.
+    def generate_override_json(**args)
+      JSON.generate(generate_override(**args))
+    end
+
     protected
 
     # Parse a Docker-style `mem_limit` and convert to megabytes.
