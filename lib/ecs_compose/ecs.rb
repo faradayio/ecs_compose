@@ -10,6 +10,10 @@ module EcsCompose
   # package from Amazon.  There might be a Ruby gem (like fog) that can do
   # some of this now, but Amazon keeps the awscli tool up to date, and ECS
   # is still very new.
+  #
+  # These are intended to be very low-level wrappers around the actual
+  # command-line tool.  Higher-level logic mostly belongs in
+  # TaskDefinition.
   module Ecs
     # Run `aws ecs` with the specified arguments.
     def self.run(*args)
@@ -42,14 +46,6 @@ module EcsCompose
       run("update-service",
           "--service", service,
           "--task-definition", task_definition)
-    end
-
-    # Update the specified service, passing in a new task definition in
-    # JSON format.
-    def self.update_service_with_json(service, json)
-      reg = register_task_definition(json)["taskDefinition"]
-      task_def = "#{reg.fetch('family')}:#{reg.fetch('revision')}"
-      update_service(service, task_def)
     end
   end
 end

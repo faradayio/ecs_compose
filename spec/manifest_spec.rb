@@ -1,9 +1,6 @@
 require 'spec_helper'
 
 describe EcsCompose::Manifest do
-  def fixture_path(relpath)
-    File.join(File.dirname(__FILE__), "fixtures", relpath)
-  end
 
   describe ".read_from_file" do
     let(:file) { fixture_path("deploy/hello.yml") }

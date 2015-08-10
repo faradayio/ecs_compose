@@ -24,8 +24,10 @@ module EcsCompose
 
     # Register this task definition with ECS, and update the corresponding
     # service.
-    def up
-      EcsCompose::Ecs.update_service_with_json(name, to_json)
+    def update
+      reg = register["taskDefinition"]
+      task_def = "#{reg.fetch('family')}:#{reg.fetch('revision')}"
+      EcsCompose::Ecs.update_service(name, task_def)
     end
 
     # Run this task definition as a one-shot ECS task, with the specified

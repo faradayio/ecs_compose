@@ -78,7 +78,7 @@ class App
   def command_up
     available = manifest.task_definitions.select {|td| td.type == :service }
     chosen = all_or_specified(available, options.fetch('<service>'))
-    chosen.each {|td| td.up }
+    chosen.each {|td| td.update }
   end
 
   def command_run
