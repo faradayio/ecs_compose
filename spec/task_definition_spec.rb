@@ -39,6 +39,12 @@ describe EcsCompose::TaskDefinition do
                 "--task-definition", "hello:2") { {} }
         expect(EcsCompose::Ecs).to receive(:run)
           .with("wait", "services-stable", "--services", "hello")
+        expect(EcsCompose::Ecs).to receive(:run)
+          .with("describe-services", "--services", "hello") do
+          # We may need to fill in more of these fields later.
+          { "failures" => [], "services" => [] }
+        end
+
         service = subject.update
         expect(service).to eq("hello")
         EcsCompose::TaskDefinition.wait_for_services([service])

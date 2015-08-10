@@ -76,6 +76,12 @@ module EcsCompose
           "--tasks", *arns)
     end
 
+    # Describe a set of services as JSON.
+    def self.describe_services(services)
+      run("describe-services",
+          "--services", *services)
+    end
+
     # Describe a set of tasks as JSON.
     def self.describe_tasks(arns)
       run("describe-tasks",

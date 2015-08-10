@@ -36,7 +36,11 @@ module EcsCompose
     # Wait for a set of services to reach a steady state.
     def self.wait_for_services(service_names)
       Ecs.wait_services_stable(service_names)
-      # TODO: Check for errors during stabilization.
+      # TODO: We never actually get here if the services don't stabilize,
+      # because wait_services_stable will fail with `Waiter ServicesStable
+      # failed: Max attempts`.  But we're keeping this code until we
+      # implement event polling and our own version of waiting.
+      ServiceError.fail_if_not_stabilized(Ecs.describe_services(service_names))
     end
 
     # Run this task definition as a one-shot ECS task, with the specified
