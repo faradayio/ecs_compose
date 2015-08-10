@@ -150,7 +150,7 @@ EOD
       containerOverrides = override.fetch('containerOverrides')
       expect(containerOverrides.length).to eq(1)
       expect(containerOverrides[0].fetch("environment"))
-        .to eq({ "FOO" => "BAR" })
+        .to eq([{ "name" => "FOO", "value" => "BAR" }])
     end
 
     it "allows overriding the container's command" do

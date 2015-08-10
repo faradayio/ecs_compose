@@ -18,25 +18,25 @@ module EcsCompose
 
     # Register this task definition with ECS.  Will create the task
     # definition if it doesn't exist, and add a new version of the task.
+    # Returns a string of the form `"name:revision"` identifying the task
+    # we registered.
     def register
-      EcsCompose::Ecs.register_task_definition(to_json)
+      reg = EcsCompose::Ecs.register_task_definition(to_json)
+        .fetch("taskDefinition")
+      "#{reg.fetch('family')}:#{reg.fetch('revision')}"
     end
 
     # Register this task definition with ECS, and update the corresponding
     # service.
     def update
-      reg = register["taskDefinition"]
-      task_def = "#{reg.fetch('family')}:#{reg.fetch('revision')}"
-      EcsCompose::Ecs.update_service(name, task_def)
+      EcsCompose::Ecs.update_service(name, register)
     end
 
     # Run this task definition as a one-shot ECS task, with the specified
     # overrides.
-    def run(environment: {}, entrypoint: nil, command: nil)
-      puts "environment: #{environment.inspect}"
-      puts "entrypoint: #{entrypoint.inspect}"
-      puts "command: #{command.inspect}"
-      raise "Not yet implemented"
+    def run(**args)
+      overrides_json = json_generator.generate_override_json(**args)
+      EcsCompose::Ecs.run_task(register, overrides_json: overrides_json)
     end
 
     # Generate ECS task definition JSON for this instance.

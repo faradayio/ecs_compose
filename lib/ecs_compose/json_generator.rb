@@ -99,7 +99,9 @@ module EcsCompose
 
       # Apply any environment overrides.
       if environment && !environment.empty?
-        container_overrides["environment"] = environment
+        container_overrides["environment"] = environment.map do |k, v|
+          { "name" => k, "value" => v }
+        end
       end
 
       # Apply any other overrides.

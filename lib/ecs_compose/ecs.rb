@@ -47,5 +47,15 @@ module EcsCompose
           "--service", service,
           "--task-definition", task_definition)
     end
+
+    # Run a one-off task.  Sample args: `"migrator:1"`.  The overrides may
+    # be specified in the JSON format used by `aws ecs run-task`.
+    def self.run_task(task_definition, overrides_json: nil)
+      extra_args = []
+      extra_args.concat(["--overrides", overrides_json]) if overrides_json
+      run("run-task",
+          "--task-definition", task_definition,
+          *extra_args)
+    end
   end
 end

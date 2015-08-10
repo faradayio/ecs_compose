@@ -11,7 +11,7 @@ Usage:
   ecs-compose --version
   ecs-compose [options] register [<task_def>...]
   ecs-compose [options] up [<service>...]
-  ecs-compose [options] run [-e <name>=<value>]... [--entrypoint <entrypoint>] <task> [--] [<arg>...]
+  ecs-compose [options] run [-e <name>=<value>]... [--entrypoint <entrypoint>] <task> [-- [<arg>...]]
   ecs-compose [options] json [<task_def>]
 
 Options:
@@ -27,7 +27,8 @@ Options:
                       docker-compose.yml file
   -e <name>=<value>   Set an environment variable
   --entrypoint <entrypoint>
-                      Override the container's regular entrypoint
+                      Override the container's regular entrypoint (NOT CURRENTLY
+                      SUPPORTED BY ECS)
 
 Commands:
   register  Registers the specified ECS task definitions (defaults to all)
@@ -72,7 +73,7 @@ class App
   def command_register
     available = manifest.task_definitions
     chosen = all_or_specified(available, options.fetch('<task_def>'))
-    chosen.each {|td| td.register }
+    chosen.each {|td| puts(td.register) }
   end
 
   def command_up
@@ -82,6 +83,12 @@ class App
   end
 
   def command_run
+    # Work around docopt lossage.
+    dashes = options.fetch('--')
+    if dashes && dashes != '--'
+      fatal_err "The '--' option to run is mandatory for now"
+    end
+
     available = manifest.task_definitions.select {|td| td.type == :task }
     task_name = options.fetch('<task>')
     task = available.find {|td| td.name == task_name } or

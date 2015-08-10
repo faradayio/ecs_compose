@@ -20,7 +20,9 @@ describe EcsCompose::TaskDefinition do
     describe "#register" do
       it "registers the task definition with ECS" do
         expect(EcsCompose::Ecs).to receive(:run)
-          .with("register-task-definition", "--cli-input-json", anything)
+          .with("register-task-definition", "--cli-input-json", anything) do
+          { "taskDefinition" => { "family" => "hello", "revision" => 2 } }
+        end
         subject.register
       end
     end
@@ -45,6 +47,17 @@ describe EcsCompose::TaskDefinition do
     subject { EcsCompose::TaskDefinition.new(:task, "hellocli", yaml) }
 
     describe "#run" do
+      it "registers the task definition with ECS and runs the task" do
+        expect(EcsCompose::Ecs).to receive(:run)
+          .with("register-task-definition",
+                "--cli-input-json", anything) do
+          { "taskDefinition" => { "family" => "hellocli", "revision" => 1 } }
+        end
+        expect(EcsCompose::Ecs).to receive(:run)
+          .with("run-task", "--task-definition", "hellocli:1",
+                "--overrides", anything)
+        subject.run(command: ["/bin/bash"])
+      end
     end
   end
 end
