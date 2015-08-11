@@ -33,6 +33,12 @@ module EcsCompose
       name
     end
 
+    # Set the number of running copies of a service we want to have.
+    def scale(count)
+      Ecs.update_service_desired_count(name, count)
+      name
+    end
+
     # Wait for a set of services to reach a steady state.
     def self.wait_for_services(service_names)
       Ecs.wait_services_stable(service_names)

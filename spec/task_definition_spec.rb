@@ -50,6 +50,16 @@ describe EcsCompose::TaskDefinition do
         EcsCompose::TaskDefinition.wait_for_services([service])
       end
     end
+
+    describe "#scale" do
+      it "updates the desired count for the service" do
+        expect(EcsCompose::Ecs).to receive(:run)
+          .with("update-service", "--service", "hello",
+                "--desired-count", "3") { {} }
+        service = subject.scale(3)
+        expect(service).to eq("hello")
+      end
+    end
   end
 
   context "for a task" do

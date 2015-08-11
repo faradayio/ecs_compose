@@ -53,6 +53,13 @@ module EcsCompose
           "--task-definition", task_definition)
     end
 
+    # Update the specified service.  Sample args: `"frontend"`, `3`.
+    def self.update_service_desired_count(service, desired_count)
+      run("update-service",
+          "--service", service,
+          "--desired-count", desired_count.to_s)
+    end
+
     # Run a one-off task.  Sample args: `"migrator:1"`.  The overrides may
     # be specified in the JSON format used by `aws ecs run-task`.
     def self.run_task(task_definition, overrides_json: nil)
