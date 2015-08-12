@@ -11,7 +11,7 @@ Usage:
   ecs-compose --version
   ecs-compose [options] register [<task_def>...]
   ecs-compose [options] up [<service>...]
-  ecs-compose [options] run [-e <name>=<value>]... [--entrypoint <entrypoint>] <task> [-- [<arg>...]]
+  ecs-compose [options] run [-e <name>=<value>]... [--entrypoint <entrypoint>] [--started-by <started-by>] <task> [-- [<arg>...]]
   ecs-compose [options] scale (all=<n> | <service>=<m>)...
   ecs-compose [options] json [<task_def>]
 
@@ -31,6 +31,9 @@ Options:
   --entrypoint <entrypoint>
                       Override the container's regular entrypoint (NOT CURRENTLY
                       SUPPORTED BY ECS)
+  --started-by <started-by>
+                      Indicate who started an ECS task, for display on the AWS
+                      console and elsewhere
 
 Commands:
   register  Registers the specified ECS task definitions (defaults to all)
@@ -110,7 +113,9 @@ class App
     command = options.fetch('<arg>')
     command = nil if command.empty?
 
+    # The flatten[0] works around a strange docopt.rb bug.
     arn = task.run(cluster,
+                   started_by: options.fetch('--started-by').flatten[0],
                    environment: env,
                    entrypoint: options.fetch('--entrypoint').flatten[0],
                    command: command)

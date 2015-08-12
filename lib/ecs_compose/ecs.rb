@@ -64,9 +64,12 @@ module EcsCompose
 
     # Run a one-off task.  Sample args: `"migrator:1"`.  The overrides may
     # be specified in the JSON format used by `aws ecs run-task`.
-    def self.run_task(cluster, task_definition, overrides_json: nil)
+    def self.run_task(cluster, task_definition,
+                      started_by: nil,
+                      overrides_json: nil)
       extra_args = []
       extra_args.concat(["--overrides", overrides_json]) if overrides_json
+      extra_args.concat(["--started-by", started_by]) if started_by
       run("run-task",
           "--cluster", cluster,
           "--task-definition", task_definition,

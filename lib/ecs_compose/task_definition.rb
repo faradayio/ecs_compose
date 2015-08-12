@@ -52,9 +52,10 @@ module EcsCompose
 
     # Run this task definition as a one-shot ECS task, with the specified
     # overrides.
-    def run(cluster, **args)
+    def run(cluster, started_by: nil, **args)
       overrides_json = json_generator.generate_override_json(**args)
       info = Ecs.run_task(cluster.name, register,
+                          started_by: started_by,
                           overrides_json: overrides_json)
       info.fetch("tasks")[0].fetch("taskArn")
     end

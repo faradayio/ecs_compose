@@ -86,7 +86,8 @@ describe EcsCompose::TaskDefinition do
           .with("run-task",
                 "--cluster", "default",
                 "--task-definition", "hellocli:1",
-                "--overrides", anything) do
+                "--overrides", anything,
+                "--started-by", "test") do
           { "tasks" => [{ "taskArn" => "arn:123" }] }
         end
         expect(EcsCompose::Ecs).to receive(:run)
@@ -101,7 +102,9 @@ describe EcsCompose::TaskDefinition do
           { "failures" => [], "tasks" => [] }
         end
 
-        arn = subject.run(cluster, command: ["/bin/bash"])
+        arn = subject.run(cluster,
+                          started_by: "test",
+                          command: ["/bin/bash"])
         expect(arn).to eq("arn:123")
         EcsCompose::TaskDefinition.wait_for_tasks(cluster, [arn])
       end
