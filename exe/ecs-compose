@@ -26,6 +26,7 @@ Options:
   -i, --file-info (task:<name> | service:<name>)
                       Specify the task type and task name for a
                       docker-compose.yml file
+  --cluster <cluster> ECS cluster to use [default: default]
   -e <name>=<value>   Set an environment variable
   --entrypoint <entrypoint>
                       Override the container's regular entrypoint (NOT CURRENTLY
@@ -47,10 +48,12 @@ class App
   DEFAULT_FILE = "docker-compose.yml"
   DEFAULT_MANIFEST = "deploy/DEPLOY-MANIFEST.yml"
 
-  attr_reader :options, :manifest
+  attr_reader :options, :cluster, :manifest
 
   def initialize
     @options = Docopt::docopt(USAGE, version: EcsCompose::VERSION)
+    # Docopt.rb does not actually support [default: ...] correctly!
+    @cluster = EcsCompose::Cluster.new(options.fetch('--cluster') || "default")
     @manifest = load_manifest()
 
     # Uncomment to dump the docopt parser output, which can be non-obvious.
@@ -81,8 +84,8 @@ class App
   def command_up
     available = manifest.task_definitions.select {|td| td.type == :service }
     chosen = all_or_specified(available, options.fetch('<service>'))
-    services = chosen.map {|td| td.update }
-    EcsCompose::TaskDefinition.wait_for_services(services)
+    services = chosen.map {|td| td.update(cluster) }
+    EcsCompose::TaskDefinition.wait_for_services(cluster, services)
   end
 
   def command_run
@@ -107,10 +110,11 @@ class App
     command = options.fetch('<arg>')
     command = nil if command.empty?
 
-    arn = task.run(environment: env,
+    arn = task.run(cluster,
+                   environment: env,
                    entrypoint: options.fetch('--entrypoint').flatten[0],
                    command: command)
-    EcsCompose::TaskDefinition.wait_for_tasks([arn])
+    EcsCompose::TaskDefinition.wait_for_tasks(cluster, [arn])
   end
 
   def command_scale
@@ -132,9 +136,9 @@ class App
     service_names = scales.map do |name, count|
       service = available.find {|td| td.name == name } or
         raise "Unknown service: #{name}"
-      service.scale(count)
+      service.scale(cluster, count)
     end
-    EcsCompose::TaskDefinition.wait_for_services(service_names)
+    EcsCompose::TaskDefinition.wait_for_services(cluster, service_names)
   end
 
   def command_json

@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe EcsCompose::TaskDefinition do
+  let(:cluster) { EcsCompose::Cluster.new("default") }
   let(:yaml) { File.read(fixture_path(yaml_path)) }
 
   context "for a service" do
@@ -35,28 +36,36 @@ describe EcsCompose::TaskDefinition do
           { "taskDefinition" => { "family" => "hello", "revision" => 2 } }
         end
         expect(EcsCompose::Ecs).to receive(:run)
-          .with("update-service", "--service", "hello",
+          .with("update-service",
+                "--cluster", "default",
+                "--service", "hello",
                 "--task-definition", "hello:2") { {} }
         expect(EcsCompose::Ecs).to receive(:run)
-          .with("wait", "services-stable", "--services", "hello")
+          .with("wait", "services-stable",
+                "--cluster", "default",
+                "--services", "hello")
         expect(EcsCompose::Ecs).to receive(:run)
-          .with("describe-services", "--services", "hello") do
+          .with("describe-services",
+                "--cluster", "default",
+                "--services", "hello") do
           # We may need to fill in more of these fields later.
           { "failures" => [], "services" => [] }
         end
 
-        service = subject.update
+        service = subject.update(cluster)
         expect(service).to eq("hello")
-        EcsCompose::TaskDefinition.wait_for_services([service])
+        EcsCompose::TaskDefinition.wait_for_services(cluster, [service])
       end
     end
 
     describe "#scale" do
       it "updates the desired count for the service" do
         expect(EcsCompose::Ecs).to receive(:run)
-          .with("update-service", "--service", "hello",
+          .with("update-service",
+                "--cluster", "default",
+                "--service", "hello",
                 "--desired-count", "3") { {} }
-        service = subject.scale(3)
+        service = subject.scale(cluster, 3)
         expect(service).to eq("hello")
       end
     end
@@ -74,21 +83,27 @@ describe EcsCompose::TaskDefinition do
           { "taskDefinition" => { "family" => "hellocli", "revision" => 1 } }
         end
         expect(EcsCompose::Ecs).to receive(:run)
-          .with("run-task", "--task-definition", "hellocli:1",
+          .with("run-task",
+                "--cluster", "default",
+                "--task-definition", "hellocli:1",
                 "--overrides", anything) do
           { "tasks" => [{ "taskArn" => "arn:123" }] }
         end
         expect(EcsCompose::Ecs).to receive(:run)
-          .with("wait", "tasks-stopped", "--tasks", "arn:123")
+          .with("wait", "tasks-stopped",
+                "--cluster", "default",
+                "--tasks", "arn:123")
         expect(EcsCompose::Ecs).to receive(:run)
-          .with("describe-tasks", "--tasks", "arn:123") do
+          .with("describe-tasks",
+                "--cluster", "default",
+                "--tasks", "arn:123") do
           # We may need to fill in more of these fields later.
           { "failures" => [], "tasks" => [] }
         end
 
-        arn = subject.run(command: ["/bin/bash"])
+        arn = subject.run(cluster, command: ["/bin/bash"])
         expect(arn).to eq("arn:123")
-        EcsCompose::TaskDefinition.wait_for_tasks([arn])
+        EcsCompose::TaskDefinition.wait_for_tasks(cluster, [arn])
       end
     end
   end

@@ -47,51 +47,58 @@ module EcsCompose
 
     # Update the specified service.  Sample args: `"frontend"`,
     # `"frontend:7"`.
-    def self.update_service(service, task_definition)
+    def self.update_service(cluster, service, task_definition)
       run("update-service",
+          "--cluster", cluster,
           "--service", service,
           "--task-definition", task_definition)
     end
 
     # Update the specified service.  Sample args: `"frontend"`, `3`.
-    def self.update_service_desired_count(service, desired_count)
+    def self.update_service_desired_count(cluster, service, desired_count)
       run("update-service",
+          "--cluster", cluster,
           "--service", service,
           "--desired-count", desired_count.to_s)
     end
 
     # Run a one-off task.  Sample args: `"migrator:1"`.  The overrides may
     # be specified in the JSON format used by `aws ecs run-task`.
-    def self.run_task(task_definition, overrides_json: nil)
+    def self.run_task(cluster, task_definition, overrides_json: nil)
       extra_args = []
       extra_args.concat(["--overrides", overrides_json]) if overrides_json
       run("run-task",
+          "--cluster", cluster,
           "--task-definition", task_definition,
           *extra_args)
     end
 
     # Wait until all of the specified services have reached a stable state.
     # Returns nil.
-    def self.wait_services_stable(services)
+    def self.wait_services_stable(cluster, services)
       run("wait", "services-stable",
+          "--cluster", cluster,
           "--services", *services)
     end
 
     # Wait until all of the specified tasks have stopped.  Returns nil.
-    def self.wait_tasks_stopped(arns)
+    def self.wait_tasks_stopped(cluster, arns)
       run("wait", "tasks-stopped",
+          "--cluster", cluster,
           "--tasks", *arns)
     end
 
     # Describe a set of services as JSON.
-    def self.describe_services(services)
+    def self.describe_services(cluster, services)
       run("describe-services",
+          "--cluster", cluster,
           "--services", *services)
     end
 
     # Describe a set of tasks as JSON.
-    def self.describe_tasks(arns)
+    def self.describe_tasks(cluster, arns)
       run("describe-tasks",
+          "--cluster", cluster,
           "--tasks", *arns)
     end
   end
