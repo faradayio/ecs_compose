@@ -97,11 +97,15 @@ module EcsCompose
     # Describe a set of services as JSON.
     def self.describe_services(cluster, services)
       # describe-services fails if asked to wait on more than 10 services.
-      services.each_slice(10) do |slice|
+      services.each_slice(10).map do |slice|
         run("describe-services",
             "--cluster", cluster,
             "--services", *slice)
-      end.flatten(1)
+      end.flatten(1).inject({"failures" => [], "services" => []}) do |collected, new|
+        collected["failures"] += new["failures"]
+        collected["services"] += new["services"]
+        collected
+      end
     end
 
     # Describe a set of tasks as JSON.
