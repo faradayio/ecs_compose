@@ -79,9 +79,12 @@ module EcsCompose
     # Wait until all of the specified services have reached a stable state.
     # Returns nil.
     def self.wait_services_stable(cluster, services)
-      run("wait", "services-stable",
-          "--cluster", cluster,
-          "--services", *services)
+      # services-stable fails if asked to wait on more than 10 services.
+      services.each_slice(10) do |slice|
+        run("wait", "services-stable",
+            "--cluster", cluster,
+            "--services", *slice)
+      end
     end
 
     # Wait until all of the specified tasks have stopped.  Returns nil.
