@@ -26,6 +26,12 @@ Options:
   -i, --file-info (task:<name> | service:<name>)
                       Specify the task type and task name for a
                       docker-compose.yml file
+  -p, --project-name <project-name>
+                      Will be prepended to the names of task definitions
+                      and services, to permit running multiple versions of
+                      an app on a single cluster.  If your task name is
+                      "foo", and your project name is "staging", then it
+                      will be registered and run as "staging-foo".
   --cluster <cluster> ECS cluster to use [default: default]
   -e <name>=<value>   Set an environment variable
   --entrypoint <entrypoint>
@@ -195,9 +201,11 @@ class App
   # Create a manifest, either by reading it in, or synthesizing it from a
   # `docker-compose.yml` file and some extra arguments.
   def load_manifest
+    project_name = options.fetch("--project-name") || nil
     case mode
     when :manifest
-      Manifest.read_from_manifest(options.fetch('--manifest') || DEFAULT_MANIFEST)
+      Manifest.read_from_manifest(options.fetch('--manifest') || DEFAULT_MANIFEST,
+                                  project_name)
     when :file
       info = options.fetch('--file-info')
       if info.nil?
@@ -208,7 +216,7 @@ class App
       end
       type, name = $1, $2
       Manifest.read_from_file(options.fetch('--file') || DEFAULT_FILE,
-                              type.to_sym, name)
+                              project_name, type.to_sym, name)
     else raise "Unknown mode: #{mode}"
     end
   end
