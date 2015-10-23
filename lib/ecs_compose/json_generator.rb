@@ -55,6 +55,9 @@ module EcsCompose
           if fields.has_key?("command")
             json["command"] = command_line(fields.fetch("command"))
           end
+          if fields.has_key?("privileged")
+            json["privileged"] = fields.fetch("privileged")
+          end
           json
 
         rescue KeyError => e

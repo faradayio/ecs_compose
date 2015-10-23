@@ -82,6 +82,7 @@ YAML
       expect(app["image"]).to eq("example/foo:19")
       expect(app["cpu"]).to eq(512)
       expect(app["memory"]).to eq(512)
+      expect(app["privileged"]).to eq(true)
       expect(app["links"]).to eq(["service1", "service2:db"])
       expect(app["portMappings"])
         .to eq([{ "hostPort" => 80, "containerPort" => 80 },
