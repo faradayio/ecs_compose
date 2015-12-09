@@ -1,0 +1,44 @@
+{
+    "taskDefinition": {
+        "status": "ACTIVE", 
+        "family": "example", 
+        "requiresAttributes": [
+            {
+                "name": "com.amazonaws.ecs.capability.privileged-container"
+            }
+        ], 
+        "volumes": [], 
+        "taskDefinitionArn": "arn:aws:ecs:us-east-1:123:task-definition/example:15", 
+        "containerDefinitions": [
+            {
+                "environment": [
+                    {
+                        "name": "EXAMPLE", 
+                        "value": "value"
+                    },
+                    {
+                        "name": "EXAMPLE2", 
+                        "value": "value2"
+                    }
+                ], 
+                "name": "example", 
+                "links": [], 
+                "mountPoints": [], 
+                "image": "acme/example:17", 
+                "essential": true, 
+                "portMappings": [
+                    {
+                        "protocol": "tcp", 
+                        "containerPort": 8200, 
+                        "hostPort": 8200
+                    }
+                ], 
+                "memory": 64, 
+                "privileged": true, 
+                "cpu": 2, 
+                "volumesFrom": []
+            }
+        ], 
+        "revision": 15
+    }
+}
