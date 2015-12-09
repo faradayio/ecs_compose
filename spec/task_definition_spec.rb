@@ -21,6 +21,10 @@ describe EcsCompose::TaskDefinition do
     describe "#register" do
       it "registers the task definition with ECS" do
         expect(EcsCompose::Ecs).to receive(:run)
+          .with("describe-task-definition", "--task-definition", "hello") do
+          { "taskDefinition" => { "family" => "hello", "revision" => 1 } }
+        end
+        expect(EcsCompose::Ecs).to receive(:run)
           .with("register-task-definition", "--cli-input-json", anything) do
           { "taskDefinition" => { "family" => "hello", "revision" => 2 } }
         end
@@ -30,6 +34,11 @@ describe EcsCompose::TaskDefinition do
 
     describe "#update" do
       it "registers the task definition with ECS and updates the service" do
+        expect(EcsCompose::Ecs).to receive(:run)
+          .with("describe-task-definition", "--task-definition", "hello") do
+          { "taskDefinition" =>
+            { "family" => "hello", "revision" => 1, "dummy" => "foo" } }
+        end
         expect(EcsCompose::Ecs).to receive(:run)
           .with("register-task-definition",
                 "--cli-input-json", anything) do
@@ -77,6 +86,11 @@ describe EcsCompose::TaskDefinition do
 
     describe "#run" do
       it "registers the task definition with ECS and runs the task" do
+        expect(EcsCompose::Ecs).to receive(:run)
+          .with("describe-task-definition", "--task-definition", "hellocli") do
+          { "taskDefinition" =>
+            { "family" => "hellocli", "revision" => 0, "dummy" => "foo" } }
+        end
         expect(EcsCompose::Ecs).to receive(:run)
           .with("register-task-definition",
                 "--cli-input-json", anything) do

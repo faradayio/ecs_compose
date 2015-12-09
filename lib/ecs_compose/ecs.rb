@@ -45,6 +45,12 @@ module EcsCompose
       end
     end
 
+    # Export the JSON describing an existing task.
+    def self.describe_task_definition(name)
+      run('describe-task-definition',
+          '--task-definition', name)
+    end
+
     # Update the specified service.  Sample args: `"frontend"`,
     # `"frontend:7"`.
     def self.update_service(cluster, service, task_definition)

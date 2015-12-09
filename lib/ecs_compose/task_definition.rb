@@ -16,14 +16,21 @@ module EcsCompose
       @yaml = yaml
     end
 
-    # Register this task definition with ECS.  Will create the task
-    # definition if it doesn't exist, and add a new version of the task.
-    # Returns a string of the form `"name:revision"` identifying the task
-    # we registered.
+    # Register this task definition with ECS if it isn't already
+    # registered.  Will create the task definition if it doesn't exist, and
+    # add a new version of the task.  Returns a string of the form
+    # `"name:revision"` identifying the task we registered, or an existing
+    # task with the same properties.
     def register
-      reg = Ecs.register_task_definition(to_json)
-        .fetch("taskDefinition")
-      "#{reg.fetch('family')}:#{reg.fetch('revision')}"
+      existing = Ecs.describe_task_definition(@name).fetch("taskDefinition")
+      new = register_new.fetch("taskDefinition")
+      use =
+        if Compare.task_definitions_match?(existing, new)
+          existing
+        else
+          new
+        end
+      "#{use.fetch('family')}:#{use.fetch('revision')}"
     end
 
     # Register this task definition with ECS, and update the corresponding
@@ -72,6 +79,11 @@ module EcsCompose
     end
 
     protected
+
+    # Always register a task.  Called by our public `register` API.
+    def register_new
+      Ecs.register_task_definition(to_json)
+    end
 
     # Return a JSON generator for this task.
     def json_generator
