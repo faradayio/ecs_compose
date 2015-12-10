@@ -21,23 +21,69 @@ module EcsCompose
     # add a new version of the task.  Returns a string of the form
     # `"name:revision"` identifying the task we registered, or an existing
     # task with the same properties.
-    def register
-      existing = Ecs.describe_task_definition(@name).fetch("taskDefinition")
+    def register(deployed=nil)
+      # Describe the version we're currently running.
+      if deployed
+        existing = Ecs.describe_task_definition(deployed)
+          .fetch("taskDefinition")
+      else
+        existing = nil
+      end
+
+      # Register the new version.  We always need to do this, so that we
+      # can compare two officially normalized versions of the same task,
+      # including any fields added by Amazon.
       new = register_new.fetch("taskDefinition")
-      use =
-        if Compare.task_definitions_match?(existing, new)
-          Plugins.plugins.each {|p| p.notify_skipping_deploy(existing, new) }
-          existing
-        else
-          new
-        end
-      "#{use.fetch('family')}:#{use.fetch('revision')}"
+
+      # Decide whether we can re-use the existing registration.
+      if existing && Compare.task_definitions_match?(existing, new)
+        rev1 = "#{existing.fetch('family')}:#{existing.fetch('revision')}"
+        rev2 = "#{new.fetch('family')}:#{new.fetch('revision')}"
+        puts "Running copy of #{rev1} looks good; not updating to #{rev2}."
+        Plugins.plugins.each {|p| p.notify_skipping_deploy(existing, new) }
+        wanted = existing
+      else
+        wanted = new
+      end
+      "#{wanted.fetch('family')}:#{wanted.fetch('revision')}"
+    end
+
+    # Get the existing "PRIMARY" deployment for the ECS service
+    # corresponding to this task definition, and return it in
+    # `name:revision` format.  Returns `nil` if it can't find a primary
+    # deployment.
+    def primary_deployment(cluster)
+      # Try to describe the existing service.
+      begin
+        service = Ecs.describe_services(cluster.name, [@name])
+          .fetch("services")[0]
+      rescue => e
+        puts <<EOD
+Error: #{e}
+
+Can't find an existing service '#{name}'.  You'll probably need to
+register one manually using the AWS console and set up any load balancers
+you might need.
+EOD
+        return nil
+      end
+
+      # Find the primary deployment.
+      deployment = service.fetch("deployments").find do |d|
+        d["status"] == "PRIMARY"
+      end
+      return nil if deployment.nil?
+
+      # Extract a task definition `name:revision`.
+      arn = deployment.fetch("taskDefinition")
+      arn.split('/').last
     end
 
     # Register this task definition with ECS, and update the corresponding
     # service.
     def update(cluster)
-      Ecs.update_service(cluster.name, name, register)
+      deployed = primary_deployment(cluster)
+      Ecs.update_service(cluster.name, name, register(deployed))
       name
     end
 

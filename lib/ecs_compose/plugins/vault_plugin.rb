@@ -38,6 +38,7 @@ module EcsCompose
           .flatten
           .select {|var| var.fetch("name") == "VAULT_TOKEN" }
           .map {|var| var.fetch("value") }
+        puts "Renewing #{tokens.length} vault tokens"
         tokens.each {|tok| Vault.auth_token.renew(tok) }
       end
     end
