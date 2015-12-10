@@ -38,6 +38,7 @@ module EcsCompose
       td = sort_recursively(td)
       td.delete("taskDefinitionArn")
       td.delete("revision")
+      Plugins.plugins.each {|p| p.normalize_task_definition!(td) }
       td
     end
   end

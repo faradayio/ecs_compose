@@ -13,6 +13,10 @@
             {
                 "environment": [
                     {
+                        "name": "VAULT_TOKEN",
+                        "value": "token15"
+                    },
+                    {
                         "name": "EXAMPLE", 
                         "value": "value"
                     },

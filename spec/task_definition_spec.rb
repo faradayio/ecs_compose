@@ -1,6 +1,13 @@
 require 'spec_helper'
 
 describe EcsCompose::TaskDefinition do
+  before do
+    allow(ENV).to receive(:has_key?).with('VAULT_ADDR') { true }
+    allow(ENV).to receive(:fetch).with('VAULT_ADDR') { '' }
+    allow(ENV).to receive(:has_key?).with('VAULT_MASTER_TOKEN') { true }
+    allow(ENV).to receive(:fetch).with('VAULT_MASTER_TOKEN') { '' }
+  end
+
   let(:cluster) { EcsCompose::Cluster.new("default") }
   let(:yaml) { File.read(fixture_path(yaml_path)) }
 
@@ -64,6 +71,68 @@ describe EcsCompose::TaskDefinition do
         service = subject.update(cluster)
         expect(service).to eq("hello")
         EcsCompose::TaskDefinition.wait_for_services(cluster, [service])
+      end
+    end
+
+    context "that doesn't need to be updated" do
+      describe "#update" do
+        it "reuses the existing task definition and renews Vault keys" do
+          expect(EcsCompose::Ecs).to receive(:run)
+            .with("describe-task-definition", "--task-definition", "hello") do
+            {
+              "taskDefinition" => {
+                "family" => "hello", "revision" => 1,
+                "containerDefinitions" => [{
+                  "environment" => [{
+                    "name" => "VAULT_TOKEN", "value" => "token1"
+                  }]
+                }]
+              }
+            }
+          end
+          expect(EcsCompose::Ecs).to receive(:run)
+            .with("register-task-definition",
+                  "--cli-input-json", anything) do
+            {
+              "taskDefinition" => {
+                "family" => "hello", "revision" => 2,
+                "containerDefinitions" => [{
+                  "environment" => [{
+                    "name" => "VAULT_TOKEN", "value" => "token2"
+                  }]
+                }]
+              }
+            }
+          end
+
+          # The key part: We need to renew token1, so that it doesn't
+          # expire any earlier than it would have without doing a full
+          # deploy.
+          expect(Vault.auth_token).to receive(:renew).with('token1')
+
+          # We need to run this anyway, in case the service is running
+          # something other than the latest version.
+          expect(EcsCompose::Ecs).to receive(:run)
+            .with("update-service",
+                  "--cluster", "default",
+                  "--service", "hello",
+                  "--task-definition", "hello:1") { {} }
+          expect(EcsCompose::Ecs).to receive(:run)
+            .with("wait", "services-stable",
+                  "--cluster", "default",
+                  "--services", "hello")
+          expect(EcsCompose::Ecs).to receive(:run)
+            .with("describe-services",
+                  "--cluster", "default",
+                  "--services", "hello") do
+            # We may need to fill in more of these fields later.
+            { "failures" => [], "services" => [] }
+          end
+
+          service = subject.update(cluster)
+          expect(service).to eq("hello")
+          EcsCompose::TaskDefinition.wait_for_services(cluster, [service])
+        end
       end
     end
 

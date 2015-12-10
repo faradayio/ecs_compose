@@ -12,6 +12,13 @@ describe EcsCompose::Compare do
   end
 
   describe ".task_definitions_match?" do
+    before do
+      allow(ENV).to receive(:has_key?).with('VAULT_ADDR') { true }
+      allow(ENV).to receive(:fetch).with('VAULT_ADDR') { '' }
+      allow(ENV).to receive(:has_key?).with('VAULT_MASTER_TOKEN') { true }
+      allow(ENV).to receive(:fetch).with('VAULT_MASTER_TOKEN') { '' }
+    end
+
     def load_taskdef(id)
       JSON.parse(File.read(fixture_path("taskdef#{id}.json")))
         .fetch("taskDefinition")

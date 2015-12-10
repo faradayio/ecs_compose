@@ -7,6 +7,7 @@ require "ecs_compose/task_error"
 require "ecs_compose/cluster"
 require "ecs_compose/task_definition"
 require "ecs_compose/manifest"
+require "ecs_compose/plugins"
 require "ecs_compose/compare"
 
 module EcsCompose

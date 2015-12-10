@@ -26,6 +26,7 @@ module EcsCompose
       new = register_new.fetch("taskDefinition")
       use =
         if Compare.task_definitions_match?(existing, new)
+          Plugins.plugins.each {|p| p.notify_skipping_deploy(existing, new) }
           existing
         else
           new
