@@ -9,6 +9,13 @@ describe EcsCompose::Compare do
       expect(data).to eq({a: [{b:[2]}, {b:[1]}]})
       expect(sorted).to eq({a: [{b:[1]}, {b:[2]}]})
     end
+
+    it 'sorts arrays of arrays', :focus do
+      data = [[[],[]],[3,4]]
+      sorted = EcsCompose::Compare.sort_recursively(data)
+      expect(data).to eq([[[],[]],[3,4]])
+      expect(sorted).to eq([[[],[]],[3,4]])
+    end
   end
 
   describe ".task_definitions_match?" do
