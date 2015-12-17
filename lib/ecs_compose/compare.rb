@@ -8,15 +8,22 @@ module EcsCompose
     def self.sort_recursively(val)
       case val
       when Array
-        val.sort_by do |item|
-          if item.instance_of?(Hash)
-            item.to_a.sort
-          elsif item.instance_of?(Array)
-            # for an array of arrays, just return 1
-            1
+        val.sort do |a, b|
+          a1 = if a.instance_of?(Hash)
+            a.to_a.sort
+          elsif a.instance_of?(Array)
+            a.sort
           else 
-            item
+            a
           end
+          b1 = if b.instance_of?(Hash)
+            b.to_a.sort
+          elsif b.instance_of?(Array)
+            b.sort
+          else 
+            b
+          end
+          a1 <=> b1 || 1
         end.map {|item| sort_recursively(item) }
       when Hash
         newval = {}

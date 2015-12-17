@@ -6,15 +6,13 @@ describe EcsCompose::Compare do
     it "sorts lists recursively, including lists of hashes" do
       data = {a: [{b:[2]}, {b:[1]}]}
       sorted = EcsCompose::Compare.sort_recursively(data)
-      expect(data).to eq({a: [{b:[2]}, {b:[1]}]})
       expect(sorted).to eq({a: [{b:[1]}, {b:[2]}]})
     end
 
     it 'sorts arrays of arrays', :focus do
-      data = [[[],[]],[3,4]]
+      data = [[[],[]], [3,4], [1,2], [5, 6]]
       sorted = EcsCompose::Compare.sort_recursively(data)
-      expect(data).to eq([[[],[]],[3,4]])
-      expect(sorted).to eq([[[],[]],[3,4]])
+      expect(sorted).to eq([[1,2], [3,4], [5, 6], [[],[]]])
     end
   end
 
