@@ -1,4 +1,3 @@
-require 'pry'
 module EcsCompose
   # Utilities for comparing ECS task definition JSON, which we need to do
   # to determine whether or not a running service needs to be deployed.
@@ -12,9 +11,6 @@ module EcsCompose
         val.sort_by do |item|
           if item.instance_of?(Hash)
             item.to_a.sort
-          elsif item.instance_of?(Array)
-            # for an array of arrays, just return 1
-            1
           else 
             item
           end
