@@ -1,3 +1,4 @@
+require 'pry'
 module EcsCompose
   # Utilities for comparing ECS task definition JSON, which we need to do
   # to determine whether or not a running service needs to be deployed.
