@@ -36,7 +36,7 @@ module EcsCompose
       new = register_new.fetch("taskDefinition")
 
       # Decide whether we can re-use the existing registration.
-      if existing && Compare.task_definitions_match?(existing, new)
+      if existing && Compare.task_definitions_match?(existing, new) && !force?
         rev1 = "#{existing.fetch('family')}:#{existing.fetch('revision')}"
         rev2 = "#{new.fetch('family')}:#{new.fetch('revision')}"
         puts "Running copy of #{rev1} looks good; not updating to #{rev2}."
@@ -135,6 +135,12 @@ EOD
     # Return a JSON generator for this task.
     def json_generator
       @json_generator ||= JsonGenerator.new(name, yaml)
+    end
+
+    # Should we force a deploy?
+    def force?
+      # ENV[...] may return nil, but we're OK with that.
+      ["1", "true", "yes"].include?(ENV['ECS_COMPOSE_FORCE_DEPLOY'])
     end
   end
 end
