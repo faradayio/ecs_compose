@@ -43,6 +43,11 @@ app:
   cpu_shares: 512
   cpuset: 0-3,5
   read_only: true
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
 
 service1:
   image: "example/service1"
@@ -94,6 +99,10 @@ YAML
         .to eq([{ "name" => "SPEED", "value" => "1" }])
       expect(app["mountPoints"]).to eq([])
       expect(app["volumesFrom"]).to eq([])
+      expect(app["ulimits"]).to eq([
+        { "name" => "nproc", "softLimit" => 65535, "hardLimit" => 65535 },
+        { "name" => "nofile", "softLimit" => 20000, "hardLimit" => 40000 },
+      ])
 
       service1 = containers[1]
       expect(service1["image"]).to eq("example/service1")

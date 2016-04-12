@@ -58,6 +58,21 @@ module EcsCompose
           if fields.has_key?("privileged")
             json["privileged"] = fields.fetch("privileged")
           end
+          if fields.has_key?("ulimits")
+            json["ulimits"] = fields.fetch("ulimits").map do |name, limits|
+              case limits
+              when Hash
+                softLimit = limits.fetch("soft")
+                hardLimit = limits.fetch("hard")
+              else
+                softLimit = limits
+                hardLimit = limits
+              end
+              { "name" => name,
+                "softLimit" => softLimit,
+                "hardLimit" => hardLimit }
+            end
+          end
           json
 
         rescue KeyError => e
