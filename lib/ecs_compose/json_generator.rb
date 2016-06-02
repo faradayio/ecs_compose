@@ -162,11 +162,19 @@ module EcsCompose
     # Parse a Docker-style port mapping and convert to ECS format.
     def port_mapping(port)
       case port.to_s
-      when /\A(\d+)\z/
+      when /\A(\d+)(?:\/([a-z]+))?\z/
         port = $1.to_i
-        { "hostPort" => port, "containerPort" => port }
-      when /\A(\d+):(\d+)\z/ 
-        { "hostPort" => $1.to_i, "containerPort" => $2.to_i }
+        {
+          "hostPort" => port,
+          "containerPort" => port,
+          "protocol" => $2 || "tcp"
+        }
+      when /\A(\d+):(\d+)(?:\/([a-z]+))?\z/
+        {
+          "hostPort" => $1.to_i,
+          "containerPort" => $2.to_i,
+          "protocol" => $3 || "tcp"
+        }
       else
         raise "Cannot parse port specification: #{port}"
       end

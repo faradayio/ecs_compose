@@ -23,7 +23,9 @@ app:
     - "cache:192.168.0.10"
   ports:
     - "80"
+    - "53/udp"
     - "3001:3000"
+    - "1000:1000/udp"
   expose:
     - "8000"
   environment:
@@ -90,8 +92,10 @@ YAML
       expect(app["privileged"]).to eq(true)
       expect(app["links"]).to eq(["service1", "service2:db"])
       expect(app["portMappings"])
-        .to eq([{ "hostPort" => 80, "containerPort" => 80 },
-                { "hostPort" => 3001, "containerPort" => 3000 }])
+        .to eq([{ "hostPort" => 80, "containerPort" => 80, "protocol" => "tcp" },
+                { "hostPort" => 53, "containerPort" => 53, "protocol" => "udp" },
+                { "hostPort" => 3001, "containerPort" => 3000, "protocol" => "tcp" },
+                { "hostPort" => 1000, "containerPort" => 1000, "protocol" => "udp" }])
       expect(app["essential"]).to eq(true)
       expect(app["entryPoint"]).to eq(["/app/runner", "-d"])
       expect(app["command"]).to eq(["bundle", "exec", "bar"])
