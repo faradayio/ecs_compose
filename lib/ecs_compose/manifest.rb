@@ -25,6 +25,23 @@ module EcsCompose
         new(defs)
       end
 
+      def read_from_cage_export(path, project_name)
+        defs = []
+        for file in Dir.glob(File.join(path, "*.yml"))
+          name = File.basename(file, ".yml")
+          defs << TaskDefinition.new(:service,
+                                     compound_name(project_name, name),
+                                     File.read(file))
+        end
+        for file in Dir.glob(File.join(path, "tasks/*.yml"))
+          name = File.basename(file, ".yml")
+          defs << TaskDefinition.new(:task,
+                                     compound_name(project_name, name),
+                                     File.read(file))
+        end
+        new(defs)
+      end
+
       private
 
       # If we've been supplied with a `project_name`, build a compound name.

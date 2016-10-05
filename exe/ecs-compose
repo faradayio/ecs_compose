@@ -18,6 +18,10 @@ Usage:
 Options:
   -h, --help          Show this help message
   --version           Print the version of this program
+  -c, --cage-export <export>
+                      A directory of `docker-compose.yml` files exported
+                      from cage (defaults to export/, takes precedence over
+                      --file)
   -m, --manifest <manifest>
                       Path to an ecs-compose manifest (defaults to
                       deploy/DEPLOY-MANIFEST.yml, takes precedence over --file)
@@ -54,6 +58,7 @@ DOCOPT
 class App
   include EcsCompose
 
+  DEFAULT_CAGE_EXPORT = "export"
   DEFAULT_FILE = "docker-compose.yml"
   DEFAULT_MANIFEST = "deploy/DEPLOY-MANIFEST.yml"
 
@@ -110,7 +115,7 @@ class App
       fatal_err("Cannot find task '#{task_name}'")
 
     env = options.fetch('-e').flatten.inject({}) do |hsh, e_opt|
-      e_opt =~ /\A([^=]+)=(.*)/ or 
+      e_opt =~ /\A([^=]+)=(.*)/ or
         fatal_err "Can't parse '-e #{e_opt}'"
       hsh[$1] = $2
       hsh
@@ -178,17 +183,21 @@ class App
       available
     else
       available.select {|td| names.include?(td.name) }
-    end      
+    end
   end
 
   # Figure out whether we have a manifest or a docker-compose.yml.  We
   # check supplied flags first, then defaults, and we prefer manifests
   # when there's a tie.
   def mode
-    if options.fetch('--manifest')
+    if options.fetch('--cage-export')
+      :cage_export
+    elsif options.fetch('--manifest')
       :manifest
     elsif options.fetch('--file')
       :file
+    elsif Dir.exist?(DEFAULT_CAGE_EXPORT)
+      :cage_export
     elsif File.exist?(DEFAULT_MANIFEST)
       :manifest
     elsif File.exist?(DEFAULT_FILE)
@@ -203,6 +212,10 @@ class App
   def load_manifest
     project_name = options.fetch("--project-name") || nil
     case mode
+    when :cage_export
+      Manifest.read_from_cage_export(options.fetch('--cage-export') ||
+                                       DEFAULT_CAGE_EXPORT,
+                                     project_name)
     when :manifest
       Manifest.read_from_manifest(options.fetch('--manifest') || DEFAULT_MANIFEST,
                                   project_name)

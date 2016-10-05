@@ -1,0 +1,10 @@
+hello:
+  image: "tutum/hello-world"
+  links:
+    - "db"
+  mem_limit: 50m
+
+db:
+  image: "postgres"
+  mem_limit: 50m
+
