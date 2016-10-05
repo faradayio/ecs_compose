@@ -5,6 +5,31 @@ describe EcsCompose::JsonGenerator do
     EcsCompose::JsonGenerator.new("my-app", yaml).generate()
   end
 
+  context "with a version 2 file (limited support)" do
+    let(:yaml) do
+      <<YAML
+---
+version: "2"
+services:
+  logspout:
+    image: gliderlabs/logspout
+    mem_limit: 16m
+YAML
+    end
+
+    it "generates the appropriate JSON" do
+      expect(subject["family"]).to eq("my-app")
+      expect(subject["volumes"]).to eq([])
+
+      containers = subject["containerDefinitions"].sort_by {|c| c["name"] }
+      expect(containers.map {|c| c["name"] }).to eq(["logspout"])
+
+      logspout = containers[0]
+      expect(logspout["memory"]).to eq(16)
+      expect(logspout["image"]).to eq("gliderlabs/logspout")
+    end
+  end
+
   context "using all supported YAML features" do
     let(:yaml) do
       <<YAML
@@ -184,4 +209,3 @@ EOD
     end
   end
 end
-

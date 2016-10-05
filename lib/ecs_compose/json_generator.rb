@@ -19,6 +19,10 @@ module EcsCompose
 
     # Generate an ECS task definition as a raw Ruby hash.
     def generate
+      if @yaml.has_key?("version")
+        @yaml = @yaml.fetch("services")
+      end
+
       # Generate JSON for our containers.
       containers = @yaml.map do |name, fields|
         # Skip this service if we've been given a list to emit, and
