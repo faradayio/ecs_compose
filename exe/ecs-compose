@@ -171,7 +171,7 @@ class App
       end
     end
 
-    found = manifest.task_definitions.find {|td| td.name } or
+    found = manifest.task_definitions.find {|td| td.name == task_definition } or
       fatal_err("Can't find task definition: #{task_definition}")
     puts found.to_json
   end
