@@ -35,6 +35,43 @@ describe EcsCompose::TaskDefinition do
       end
     end
 
+    describe '#primary_deployment' do
+      let(:definition) { described_class.new :service, "hello", yaml }
+
+      subject { definition.primary_deployment cluster }
+
+      context 'service not found' do
+        before { stub EcsCompose::Ecs, describe_services: nil }
+
+        it { is_expected.to be_nil }
+      end
+
+      context 'service description fails' do
+        before { expect(EcsCompose::Ecs).to receive(:describe_services).and_raise('nope') }
+
+        it { is_expected.to be_nil }
+      end
+
+      context 'service not yet deployed' do
+        before { stub EcsCompose::Ecs, describe_services: { 'services' => [
+          { 'deployments' => [] } 
+        ] } }
+
+        it { is_expected.to be_nil }
+      end
+
+      context 'service was previously deployed' do
+        before { stub EcsCompose::Ecs, describe_services: { 'services' => [
+          { 'deployments' => [
+            'status' => 'PRIMARY',
+            'taskDefinition' => 'hello/123'
+          ] } 
+        ] } }
+
+        it { is_expected.to eq '123' }
+      end
+    end
+
     describe "#update" do
       it "registers the task definition with ECS and updates the service" do
         expect(EcsCompose::Ecs).to receive(:run)

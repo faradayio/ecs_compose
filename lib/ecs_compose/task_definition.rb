@@ -54,19 +54,23 @@ module EcsCompose
     # deployment.
     def primary_deployment(cluster)
       # Try to describe the existing service.
-      begin
-        service = Ecs.describe_services(cluster.name, [@name])
-          .fetch("services")[0]
+      description = begin
+        Ecs.describe_services(cluster.name, [@name])
       rescue => e
-        puts <<EOD
-Error: #{e}
+        puts "Error: #{e}"
+        nil
+      end
 
+      if description.nil?
+        puts <<EOD
 Can't find an existing service '#{name}'.  You'll probably need to
 register one manually using the AWS console and set up any load balancers
 you might need.
 EOD
         return nil
       end
+
+      service = description.fetch("services")[0]
 
       # Find the primary deployment.
       deployment = service.fetch("deployments").find do |d|
