@@ -61,16 +61,21 @@ module EcsCompose
         nil
       end
 
-      if description.nil?
-        puts <<EOD
+      missing_service_warning = <<-STR
 Can't find an existing service '#{name}'.  You'll probably need to
 register one manually using the AWS console and set up any load balancers
 you might need.
-EOD
+      STR
+
+      if description.nil?
+        puts missing_service_warning
         return nil
       end
 
-      service = description.fetch("services")[0]
+      unless service = description.fetch("services")[0]
+        puts missing_service_warning
+        return nil
+      end
 
       # Find the primary deployment.
       deployment = service.fetch("deployments").find do |d|
