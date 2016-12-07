@@ -17,8 +17,7 @@ CONTAINER="$IMAGE-run"
 
 docker build -t $IMAGE .
 
-mkdir -p pkg
-rm -rf pkg/*
+rm -rf pkg
 
 set +o xtrace
 
