@@ -20,6 +20,7 @@ chmod 0600 ~/.gem/credentials
 # Test our gem.
 rspec
 
+mkdir -p pkg
 gem build ecs_compose.gemspec
 mv *.gem pkg/
 gem push pkg/*.gem
