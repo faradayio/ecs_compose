@@ -18,9 +18,8 @@ set -o xtrace
 chmod 0600 ~/.gem/credentials
 
 # Test our gem.
-bundle exec rspec
+rspec
 
-# Package and publish our gem.
-rm -f *.gem
 gem build ecs_compose.gemspec
-gem push ecs_compose-*.gem
+mv *.gem pkg/
+gem push pkg/*.gem

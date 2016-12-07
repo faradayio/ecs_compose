@@ -12,25 +12,24 @@ set -e
 set -u
 set -o xtrace
 
-# Set our test image and container names.
-TEST_IMAGE="$GO_PIPELINE_NAME-$GO_PIPELINE_COUNTER-test"
-TEST_CONTAINER="$TEST_IMAGE-container"
+IMAGE="$GO_PIPELINE_NAME-$GO_PIPELINE_COUNTER"
+CONTAINER="$IMAGE-run"
 
-# Build our container.
-docker build -t "$TEST_IMAGE" .
+docker build -t $IMAGE .
 
-# Run our docker container (without printing).
+mkdir -p pkg
+rm -rf pkg/*
+
 set +o xtrace
-echo "(Running docker container)"
+
 docker run \
     -e ECS_COMPOSE_BUILD_NUMBER="$GO_PIPELINE_COUNTER" \
     -e RUBYGEMS_AUTH="$PUBLIC_FARADAYIO_RUBYGEMS_AUTH" \
-    --name "$TEST_CONTAINER" \
-    --rm \
-    "$TEST_IMAGE"
+    --name $CONTAINER \
+    $IMAGE
+docker cp $CONTAINER:/gem/pkg/*.gem pkg/
+docker rm -f $CONTAINER
+
 set -o xtrace
 
-# Clean up our image now that we no longer need it.
-docker rmi "$TEST_IMAGE"
-
-
+docker rmi $IMAGE
