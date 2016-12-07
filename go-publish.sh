@@ -27,7 +27,7 @@ docker run \
     -e RUBYGEMS_AUTH="$PUBLIC_FARADAYIO_RUBYGEMS_AUTH" \
     --name $CONTAINER \
     $IMAGE
-docker cp $CONTAINER:/gem/pkg/*.gem pkg/
+docker cp $CONTAINER:/gem/pkg pkg
 docker rm -f $CONTAINER
 
 set -o xtrace
