@@ -29,8 +29,8 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "docopt", "~> 0.5.0"
   spec.add_dependency "colorize", "~> 0.7.7"
-
-  spec.add_development_dependency "vault", "~> 0.1.5"
+  spec.add_dependency "vault", "~> 0.1.5"
+  
   spec.add_development_dependency "bundler", "~> 1.10"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec"
