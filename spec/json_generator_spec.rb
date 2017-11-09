@@ -14,6 +14,8 @@ services:
   logspout:
     image: gliderlabs/logspout
     mem_limit: 16m
+    labels:
+      foo: bar
 YAML
     end
 
@@ -27,6 +29,7 @@ YAML
       logspout = containers[0]
       expect(logspout["memory"]).to eq(16)
       expect(logspout["image"]).to eq("gliderlabs/logspout")
+      expect(logspout["dockerLabels"]).to eq({ "foo" => "bar" })
     end
   end
 

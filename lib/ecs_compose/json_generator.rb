@@ -52,6 +52,7 @@ module EcsCompose
             "environment" => environment(fields["environment"] || {}),
             "mountPoints" => mount_points,
             "volumesFrom" => [],
+            "dockerLabels" => fields.fetch("labels", {}),
           }
           if fields.has_key?("entrypoint")
             json["entryPoint"] = command_line(fields.fetch("entrypoint"))
